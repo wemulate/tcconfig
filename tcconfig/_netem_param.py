@@ -9,7 +9,7 @@ import humanreadable as hr
 import typepy
 from typepy import RealNumber
 
-from ._common import validate_within_min_max
+from ._common import validate_within_min_max, validate_possible_values
 from ._const import Tc
 from ._logger import logger
 from ._network import get_upper_limit_rate
@@ -26,6 +26,8 @@ MAX_CORRUPTION_RATE = 100  # [%]
 
 MIN_REORDERING_RATE = 0  # [%]
 MAX_REORDERING_RATE = 100  # [%]
+
+POSSIBLE_DIST_METHODS = ['uniform', 'normal', 'pareto', 'paretonormal']
 
 
 def convert_rate_to_f(rate):
@@ -46,13 +48,15 @@ class NetemParameter:
         bandwidth_rate=None,
         latency_time=None,
         latency_distro_time=None,
+        latency_distro_method=None,
         packet_loss_rate=None,
         packet_duplicate_rate=None,
         corruption_rate=None,
         reordering_rate=None,
     ):
         self.__device = device
-
+        self.__latency_distro_method = latency_distro_method
+   
         self.__bandwidth_rate = self.__normalize_bandwidth_rate(bandwidth_rate)
         self.__packet_loss_rate = convert_rate_to_f(packet_loss_rate)  # [%]
         self.__packet_duplicate_rate = convert_rate_to_f(packet_duplicate_rate)  # [%]
@@ -153,6 +157,9 @@ class NetemParameter:
         if self.__latency_distro_time and self.__latency_distro_time.milliseconds > 0:
             item_list.append("distro{}".format(self.__latency_distro_time.milliseconds))
 
+        if self.__latency_distro_method:
+            item_list.append("method{}".format(self.__latency_distro_method))
+
         if self.__packet_loss_rate:
             item_list.append("loss{}".format(self.__packet_loss_rate))
 
@@ -182,9 +189,14 @@ class NetemParameter:
             if self.__latency_distro_time and self.__latency_distro_time > hr.Time(
                 Tc.ValueRange.LatencyTime.MIN
             ):
-                item_list.append(
-                    "{}ms distribution normal".format(self.__latency_distro_time.milliseconds)
-                )
+                if self.__latency_distro_method:
+                    item_list.append(
+                        "{}ms distribution {}".format(self.__latency_distro_time.milliseconds, self.__latency_distro_method)
+                    )
+                else:
+                    item_list.append(
+                        "{}ms distribution normal".format(self.__latency_distro_time.milliseconds)
+                    )
 
         if self.__corruption_rate > 0:
             item_list.append("corrupt {:f}%".format(self.__corruption_rate))
@@ -219,6 +231,13 @@ class NetemParameter:
                 )
             except hr.ParameterError as e:
                 raise hr.ParameterError("delay-distro {}".format(e))
+
+        if self.__latency_distro_method:
+            validate_possible_values(
+                "--delay-distro-method (latency distribution method)",
+                self.__latency_distro_method,
+                POSSIBLE_DIST_METHODS
+            )
 
     def __validate_packet_loss_rate(self):
         validate_within_min_max(

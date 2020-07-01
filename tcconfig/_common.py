@@ -79,6 +79,15 @@ def is_execute_tc_command(tc_command_output):
     return tc_command_output == TcCommandOutput.NOT_SET
 
 
+def validate_possible_values(param_name, value, possible_values):
+    if value in possible_values:
+        return 
+    raise ParameterError(
+            "'{:s}' is not valid".format(param_name),
+            expected="{:s}".format(possible_values),
+            value="{:s}".format(value),
+        )
+
 def validate_within_min_max(param_name, value, min_value, max_value, unit):
     from dataproperty import DataProperty
 

@@ -51,6 +51,7 @@ class Tc:
         PROTOCOL = "protocol"
         SRC_NETWORK = "src-network"
         SRC_PORT = "src-port"
+        DIST_METHOD = "normal"
 
     class ValueRange:
         class LatencyTime:

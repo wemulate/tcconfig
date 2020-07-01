@@ -118,13 +118,22 @@ def get_arg_parser():
         "--delay-distro",
         dest="latency_distro_time",
         default=Tc.ValueRange.LatencyTime.MIN,
-        help="""distribution of network latency becomes X +- Y (normal distribution).
+        help="""distribution of network latency becomes X +- Y ( standard normal distribution).
         Here X is the value of --delay option and Y is the value of --delay-dist option).
         network latency distribution is uniform, without this option. valid time units are: {unit}.
         if no unit string found, considered milliseconds as the time unit.
         """.format(
             unit=_get_unit_help_msg()
         ),
+    )
+    group.add_argument(
+        "--delay-distro-method",
+        dest="latency_distro_method",
+        default=Tc.Param.DIST_METHOD,
+        help=""" distribution method used in the distribution of the network latency.
+        By default the distribution of the network latency is normally distributed.
+        valid values are: uniform | normal | pareto |  paretonormal
+        """,
     )
     group.add_argument(
         "--loss",
@@ -299,6 +308,7 @@ class TcSetMain(Main):
                 bandwidth_rate=options.bandwidth_rate,
                 latency_time=options.network_latency,
                 latency_distro_time=options.latency_distro_time,
+                latency_distro_method=options.latency_distro_method,
                 packet_loss_rate=options.packet_loss_rate,
                 packet_duplicate_rate=options.packet_duplicate_rate,
                 corruption_rate=options.corruption_rate,
